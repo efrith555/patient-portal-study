@@ -1,0 +1,2093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HealthOrg Patient Portal</title>
+  <style>
+    :root {
+      --primary: #0b6e99;
+      --primary-light: #e8f4f8;
+      --primary-dark: #084c6a;
+      --accent: #2e9e6a;
+      --accent-light: #e6f7ef;
+      --danger: #c0392b;
+      --warning: #e67e22;
+      --bg: #f0f4f7;
+      --white: #ffffff;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
+      --shadow-lg: 0 4px 12px rgba(0,0,0,0.1), 0 8px 24px rgba(0,0,0,0.08);
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--gray-800);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .portal-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .portal-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    .portal-logo svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-greeting {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .notification-badge {
+      position: relative;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
+    .notification-badge svg { width: 22px; height: 22px; }
+
+    .badge-count {
+      position: absolute;
+      top: -6px;
+      right: -8px;
+      background: var(--danger);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: scale(0);
+      transition: var(--transition);
+    }
+
+    .badge-count.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .progress-container {
+      background: rgba(255,255,255,0.15);
+      height: 4px;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4ecdc4, #44d4a0);
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 0%;
+      border-radius: 0 2px 2px 0;
+    }
+
+    .portal-main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+      min-height: calc(100vh - 64px);
+    }
+
+    .screen {
+      display: none;
+      animation: fadeSlideUp 0.5s ease forwards;
+    }
+
+    .screen.active { display: block; }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+
+    .card h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .card h2 {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 6px;
+      letter-spacing: -0.3px;
+    }
+
+    .card-subtitle {
+      color: var(--gray-500);
+      font-size: 15px;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+
+    .form-group .hint {
+      font-size: 13px;
+      color: var(--gray-400);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--gray-800);
+      background: var(--white);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    input[type="text"]:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(11,110,153,0.12);
+    }
+
+    select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 13px 28px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all var(--transition);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(11,110,153,0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(11,110,153,0.4);
+    }
+
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-secondary {
+      background: var(--gray-100);
+      color: var(--gray-600);
+      border: 1.5px solid var(--gray-200);
+    }
+
+    .btn-secondary:hover {
+      background: var(--gray-200);
+      color: var(--gray-700);
+    }
+
+    .btn-accent {
+      background: linear-gradient(135deg, var(--accent) 0%, #237a52 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(46,158,106,0.3);
+    }
+
+    .btn-accent:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(46,158,106,0.4);
+    }
+
+    .btn-block { width: 100%; }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .btn-group .btn { flex: 1; }
+
+    .condition-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .condition-card {
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition);
+      background: var(--white);
+    }
+
+    .condition-card:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .condition-card.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(11,110,153,0.15);
+    }
+
+    .condition-card .icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .condition-card .title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--gray-800);
+      margin-bottom: 4px;
+    }
+
+    .condition-card .desc {
+      font-size: 13px;
+      color: var(--gray-500);
+    }
+
+    .message-envelope {
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin: 20px 0;
+      background: var(--white);
+    }
+
+    .message-header {
+      background: var(--gray-50);
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .message-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .message-meta .sender {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--gray-800);
+    }
+
+    .message-meta .timestamp {
+      font-size: 12px;
+      color: var(--gray-400);
+    }
+
+    .message-unread-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+      margin-left: auto;
+      flex-shrink: 0;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.85); }
+    }
+
+    .message-subject {
+      padding: 16px 20px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .message-body {
+      padding: 12px 20px 20px;
+      font-size: 15px;
+      color: var(--gray-700);
+      line-height: 1.7;
+    }
+
+    .message-body strong { color: var(--gray-900); }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .calendar-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .day-column {
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .day-label {
+      background: var(--gray-50);
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-600);
+      text-align: center;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .day-slots { padding: 8px; }
+
+    .time-slot {
+      display: block;
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 6px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 6px;
+      background: var(--white);
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all var(--transition);
+      text-align: center;
+    }
+
+    .time-slot:last-child { margin-bottom: 0; }
+
+    .time-slot:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    .time-slot.selected {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+
+    .range-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .range-group input[type="range"] {
+      flex: 1;
+      accent-color: var(--primary);
+      height: 6px;
+    }
+
+    .range-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+      min-width: 32px;
+      text-align: center;
+    }
+
+    .range-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--gray-400);
+      margin-top: 4px;
+    }
+
+    .scale-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: nowrap;
+      margin-top: 8px;
+    }
+
+    .scale-btn {
+      flex: 1;
+      min-width: 0;
+      height: 42px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 8px;
+      background: var(--white);
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--gray-600);
+      cursor: pointer;
+      transition: all var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scale-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .scale-btn.selected {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: white;
+    }
+
+    .scale-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--gray-400);
+      margin-top: 6px;
+    }
+
+    .scale-error {
+      outline: 2px solid var(--danger);
+      border-radius: 6px;
+    }
+
+    .radio-group { display: flex; flex-direction: column; gap: 10px; }
+
+    .radio-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .radio-option:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .radio-option.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .radio-option input[type="radio"],
+    .radio-option input[type="checkbox"] {
+      margin-top: 2px;
+      accent-color: var(--primary);
+    }
+
+    .radio-option span {
+      font-size: 14px;
+      color: var(--gray-700);
+      line-height: 1.5;
+    }
+
+    .success-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--accent-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .success-icon svg {
+      width: 36px;
+      height: 36px;
+      color: var(--accent);
+    }
+
+    .appointment-summary {
+      background: var(--gray-50);
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .appointment-summary .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 14px;
+    }
+
+    .appointment-summary .row .label { color: var(--gray-500); }
+    .appointment-summary .row .value { font-weight: 600; color: var(--gray-800); }
+
+    .divider {
+      height: 1px;
+      background: var(--gray-200);
+      margin: 24px 0;
+    }
+
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--gray-400);
+      margin-bottom: 16px;
+    }
+
+    .step-indicator .step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .text-center { text-align: center; }
+    .mt-16 { margin-top: 16px; }
+    .mt-24 { margin-top: 24px; }
+    .mb-8 { margin-bottom: 8px; }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 28px 0 16px 0;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--primary-light);
+    }
+
+    .section-header:first-child { margin-top: 8px; }
+
+    .section-header .section-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .section-header .section-icon.blue { background: var(--primary-light); color: var(--primary); }
+    .section-header .section-icon.green { background: var(--accent-light); color: var(--accent); }
+    .section-header .section-icon.orange { background: #fff3e0; color: var(--warning); }
+
+    .section-header h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin: 0;
+    }
+
+    .section-header p {
+      font-size: 13px;
+      color: var(--gray-400);
+      margin: 0;
+    }
+
+    .attention-box {
+      background: var(--gray-50);
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+    }
+
+    .attention-box .attention-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #fff3e0;
+      color: var(--warning);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .inline-alert {
+      background: #fff8e6;
+      border-left: 4px solid var(--warning);
+      padding: 12px 16px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 14px;
+      color: var(--gray-700);
+      margin: 16px 0;
+    }
+
+    .btn-arrow {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      padding: 0;
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .btn-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+
+    @media (max-width: 600px) {
+      .condition-cards { grid-template-columns: 1fr; }
+      .calendar-grid { grid-template-columns: 1fr 1fr; }
+      .card { padding: 24px 20px; }
+      .portal-main { padding: 20px 12px 40px; }
+      .btn-group { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="portal-header">
+  <div class="portal-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+    <span>HealthOrg</span>
+  </div>
+  <div class="header-right">
+    <span class="user-greeting" id="userGreeting"></span>
+    <div class="notification-badge" id="notifBadge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="badge-count" id="badgeCount">1</span>
+    </div>
+  </div>
+  <div class="progress-container">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+</header>
+
+<main class="portal-main">
+
+  <!-- SCREEN 1: Welcome -->
+  <section id="screen-welcome" class="screen active">
+    <div class="card text-center">
+      <div style="margin-bottom:20px;">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <h1>Welcome to your HealthOrg Patient Portal</h1>
+      <p class="card-subtitle" style="text-align:left;">The goal of this study is to learn how you feel about receiving different kinds of health messages. We are very interested in your feedback so that we can improve patient portal experiences. There are no wrong answers and your honest responses are valuable to us.</p>
+      <p class="card-subtitle" style="text-align:left;">Please imagine that you are eligible to schedule an appointment with your provider to manage your <span id="welcomeConditionText"></span>. This patient portal demo will walk you through a brief health check-in, and give you the option to schedule your visit.</p>
+      <div class="divider"></div>
+      <div class="form-group" style="text-align:left;">
+        <label for="inputFirstName">Please enter your first name and click the button below to log on.</label>
+        <input type="text" id="inputFirstName" placeholder="Enter your first name" autocomplete="given-name">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="startJourney()">Log in to my Portal</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 2: Condition Selection -->
+  <section id="screen-condition" class="screen">
+    <div class="card">
+      <div class="step-indicator"><span class="step-num">1</span> Health Checkup Selection</div>
+      <h2>Your Eligible Health Checkups</h2>
+      <p class="card-subtitle">Based on your health profile, you may be eligible for the following care checkup(s). Please select the checkup icon and continue when you are ready.</p>
+      <div class="condition-cards">
+        <div class="condition-card" id="card-HTN" onclick="selectCondition('HTN')">
+          <span class="icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </span>
+          <div class="title">Blood Pressure Checkup</div>
+          <div class="desc">Hypertension management visit</div>
+        </div>
+        <div class="condition-card" id="card-Diabetes" onclick="selectCondition('Diabetes')">
+          <span class="icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </span>
+          <div class="title">Diabetes Checkup</div>
+          <div class="desc">Blood sugar management visit</div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block mt-24" id="btnConditionNext" onclick="goToAssessment()" disabled style="opacity:0.5;">Continue</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 3a: Health Assessment -->
+  <section id="screen-assessment-health" class="screen">
+    <div class="card">
+      <div class="step-indicator"><span class="step-num">1</span> Pre-Visit Check-In</div>
+      <h2>Tell Us About Your Experience</h2>
+      <div id="assessmentHealthContent"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary btn-arrow" onclick="advanceToBarriers()" aria-label="Next">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCREEN 3b: Barriers & Motivation -->
+  <section id="screen-assessment-barriers" class="screen">
+    <div class="card">
+      <div class="step-indicator"><span class="step-num">1</span> Pre-Visit Check-In</div>
+      <h2>A Few More Questions</h2>
+      <p class="card-subtitle">Help us understand what motivates you and any challenges you may face.</p>
+
+      <!-- HTN Barrier Form -->
+      <div id="barrierFormHTN" style="display:none;">
+        <div class="form-group">
+          <label>What motivates you most to manage your health?</label>
+          <select id="assessMotivationHTN">
+            <option value="" disabled selected>Select one...</option>
+            <option value="external">External reasons (e.g., financial, my family, pleasing someone else, etc.)</option>
+            <option value="identity">I do not want to be seen as someone with hypertension</option>
+            <option value="goals">Managing my health helps me accomplish other goals in my life</option>
+            <option value="enjoyment">I genuinely enjoy it and feel better when I do it</option>
+            <option value="values">It is an important priority for me and I deeply value my health</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Which of the following is the biggest barrier or challenge you face with your blood pressure care?</label>
+          <p class="hint">Select the statement that most applies to you.</p>
+          <select id="assessBarrierHTN" onchange="onBarrierChange()">
+            <option value="" disabled selected>Select a barrier or challenge...</option>
+            <option value="htn_no_instructions">I have not been given instructions for managing my blood pressure</option>
+            <option value="htn_stress_emotions">Stress, anxiety, or emotions make it difficult for me to manage my blood pressure</option>
+            <option value="htn_treatment_options">I want my personal treatment options to be explained better</option>
+            <option value="htn_contact_preference">I do not want to receive random calls or reminders from the health system. I'd rather be contacted by my doctor.</option>
+            <option value="htn_understanding">I don't fully understand how to manage my blood pressure</option>
+            <option value="htn_comorbidity">I have too many health problems to do a good job managing them</option>
+            <option value="htn_no_barrier">I do not face any specific barriers or challenges</option>
+          </select>
+        </div>
+        <div class="form-group" id="barrierImpactGroupHTN" style="display:none;">
+          <label>How much does this barrier impact your ability to achieve your blood pressure management goals?</label>
+          <div class="scale-row" id="scaleBarrierImpactHTN">
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactHTN',1)">1</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactHTN',2)">2</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactHTN',3)">3</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactHTN',4)">4</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactHTN',5)">5</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactHTN',6)">6</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactHTN',7)">7</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactHTN',8)">8</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactHTN',9)">9</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactHTN',10)">10</button>
+          </div>
+          <div class="scale-labels"><span>1 &#8211; Not at all</span><span>10 &#8211; Makes it nearly impossible</span></div>
+        </div>
+      </div>
+
+      <!-- Diabetes Barrier Form -->
+      <div id="barrierFormDiabetes" style="display:none;">
+        <div class="form-group">
+          <label>What motivates you most to manage your health?</label>
+          <select id="assessMotivationDM">
+            <option value="" disabled selected>Select one...</option>
+            <option value="external">External reasons (e.g., financial, my family, pleasing someone else, etc.)</option>
+            <option value="identity">I do not want to be seen as someone with diabetes</option>
+            <option value="goals">Managing my health helps me accomplish other goals in my life</option>
+            <option value="enjoyment">I genuinely enjoy it and feel better when I do it</option>
+            <option value="values">It is an important priority for me and I deeply value my health</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Which of the following is the biggest barrier or challenge you face with your blood sugar care?</label>
+          <p class="hint">Select the statement that most applies to you.</p>
+          <select id="assessBarrierDM" onchange="onBarrierChange()">
+            <option value="" disabled selected>Select a barrier or challenge...</option>
+            <option value="dm_continuity_expert">I don't have a consistent relationship with my care team</option>
+            <option value="dm_forgetfulness">I tend to forget about my checkups</option>
+            <option value="dm_continuity_team">I feel like I'm managing my diabetes alone</option>
+            <option value="dm_importance">I'm not sure checkups are that important</option>
+            <option value="dm_provider_relationship">I don't feel connected to my provider</option>
+            <option value="dm_understanding">I don't fully understand how to manage my blood sugar</option>
+            <option value="dm_comorbidity">I have too many health problems to do a good job managing them</option>
+          </select>
+        </div>
+        <div class="form-group" id="barrierImpactGroupDM" style="display:none;">
+          <label>How much does this barrier impact your ability to achieve your blood sugar management goals?</label>
+          <div class="scale-row" id="scaleBarrierImpactDM">
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactDM',1)">1</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactDM',2)">2</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactDM',3)">3</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactDM',4)">4</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactDM',5)">5</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactDM',6)">6</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactDM',7)">7</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactDM',8)">8</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactDM',9)">9</button>
+            <button type="button" class="scale-btn" onclick="selectScale('scaleBarrierImpactDM',10)">10</button>
+          </div>
+          <div class="scale-labels"><span>1 &#8211; Not at all</span><span>10 &#8211; Makes it nearly impossible</span></div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary btn-arrow" onclick="submitAssessment()" aria-label="Next">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCREEN: Attention Check -->
+  <section id="screen-attention" class="screen">
+    <div class="card">
+      <div class="attention-box">
+        <div class="attention-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <h2 style="margin-bottom:8px;">Quick Check</h2>
+        <p class="card-subtitle">To make sure you're reading carefully, please answer the following question.</p>
+      </div>
+      <div class="form-group mt-24">
+        <label>What is this patient portal demo asking you to consider doing?</label>
+        <select id="attentionCheck">
+          <option value="" disabled selected>Select one...</option>
+          <option value="wrong_refill">Refilling a prescription online</option>
+          <option value="correct">Scheduling an appointment with my provider</option>
+          <option value="wrong_pay">Paying a medical bill</option>
+          <option value="wrong_records">Requesting my medical records</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-block mt-24" onclick="submitAttentionCheck()">Continue</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 4: Tailored Message -->
+  <section id="screen-message" class="screen">
+    <div class="card">
+      <div class="step-indicator"><span class="step-num">2</span> Messages</div>
+      <h2>Inbox <span style="font-size:14px;color:var(--primary);font-weight:400;">(1 new message)</span></h2>
+      <div class="message-envelope">
+        <div class="message-header">
+          <div class="message-avatar">CT</div>
+          <div class="message-meta">
+            <div class="sender" id="msgSender">Your Care Team at HealthOrg</div>
+            <div class="timestamp" id="msgTimestamp"></div>
+          </div>
+          <div class="message-unread-dot"></div>
+        </div>
+        <div class="message-subject" id="msgSubject"></div>
+        <div class="message-body" id="msgBody"></div>
+      </div>
+      <button class="btn btn-accent btn-block mt-16" onclick="handleTapToSchedule()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Schedule my visit
+      </button>
+      <button class="btn btn-secondary btn-block mt-16" onclick="declineScheduling()">I'd rather not schedule right now</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 5: Scheduling -->
+  <section id="screen-scheduling" class="screen">
+    <div class="card">
+      <div class="step-indicator"><span class="step-num">3</span> Appointment Scheduling</div>
+      <h2>Schedule Your <span id="schedConditionLabel"></span> Checkup</h2>
+      <p class="card-subtitle">Select a date and time that works best for you.</p>
+      <div class="calendar-header">
+        <h3 id="calendarWeekLabel"></h3>
+        <span style="font-size:13px;color:var(--gray-400);">Dr. Sarah Chen &bull; Primary Care Center</span>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+      <div id="selectedSlotConfirm" style="display:none;">
+        <div class="inline-alert" id="selectedSlotAlert"></div>
+        <button class="btn btn-accent btn-block" onclick="confirmAppointment()">Confirm This Appointment</button>
+      </div>
+      <div class="divider"></div>
+      <button class="btn btn-secondary btn-block" onclick="declineScheduling()">I'd rather not schedule right now</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 6a: Appointment Confirmed -->
+  <section id="screen-confirmed" class="screen">
+    <div class="card text-center">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2>Appointment Scheduled!</h2>
+      <p class="card-subtitle">Your checkup has been added to your portal calendar.</p>
+      <div class="appointment-summary" id="apptSummary"></div>
+      <div class="divider"></div>
+      <button class="btn btn-primary btn-block mt-24" onclick="submitConfirmed()">Continue</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 6b: Schedule Reasons (HTN - why did you choose to schedule?) -->
+  <section id="screen-schedule-reasons" class="screen">
+    <div class="card">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2>Thank you for scheduling with us!</h2>
+      <p class="card-subtitle">Can you tell us what influenced your decision? Select all that apply.</p>
+      <div class="radio-group" id="scheduleReasons"></div>
+      <div class="form-group mt-16" id="scheduleOtherGroup" style="display:none;">
+        <label for="scheduleOtherText">Please describe:</label>
+        <textarea id="scheduleOtherText" placeholder="Tell us more..."></textarea>
+      </div>
+      <button class="btn btn-primary btn-block mt-24" onclick="submitScheduleReasons()">Continue</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 6c: Decline / Reasons -->
+  <section id="screen-decline" class="screen">
+    <div class="card">
+      <h2>We Understand</h2>
+      <p class="card-subtitle">Can you tell us what's preventing you from scheduling? Select all that apply.</p>
+      <div class="radio-group" id="declineReasons"></div>
+      <div class="form-group mt-16" id="declineOtherGroup" style="display:none;">
+        <label for="declineOtherText">Please describe:</label>
+        <textarea id="declineOtherText" placeholder="Tell us more..."></textarea>
+      </div>
+      <button class="btn btn-primary btn-block mt-24" onclick="submitDecline()">Continue</button>
+    </div>
+  </section>
+
+  <!-- SCREEN: Message Perceptions -->
+  <section id="screen-message-perceptions" class="screen">
+    <div class="card">
+      <div class="step-indicator"><span class="step-num">4</span> Your Feedback</div>
+      <h2>Message Feedback</h2>
+      <p class="card-subtitle">Please rate your level of agreement with each statement about the message you just received.</p>
+
+      <div class="form-group">
+        <label>This message was convincing.</label>
+        <div class="scale-row" id="scalePME1">
+          <button type="button" class="scale-btn" onclick="selectScale('scalePME1',1)">1</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scalePME1',2)">2</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scalePME1',3)">3</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scalePME1',4)">4</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scalePME1',5)">5</button>
+        </div>
+        <div class="scale-labels"><span>1 – Strongly disagree</span><span>5 – Strongly agree</span></div>
+      </div>
+
+      <div class="form-group">
+        <label>This message would make someone want to schedule a visit.</label>
+        <div class="scale-row" id="scalePME2">
+          <button type="button" class="scale-btn" onclick="selectScale('scalePME2',1)">1</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scalePME2',2)">2</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scalePME2',3)">3</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scalePME2',4)">4</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scalePME2',5)">5</button>
+        </div>
+        <div class="scale-labels"><span>1 – Strongly disagree</span><span>5 – Strongly agree</span></div>
+      </div>
+
+      <div class="form-group">
+        <label>This message felt personally relevant to me.</label>
+        <div class="scale-row" id="scalePME3">
+          <button type="button" class="scale-btn" onclick="selectScale('scalePME3',1)">1</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scalePME3',2)">2</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scalePME3',3)">3</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scalePME3',4)">4</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scalePME3',5)">5</button>
+        </div>
+        <div class="scale-labels"><span>1 – Strongly disagree</span><span>5 – Strongly agree</span></div>
+      </div>
+
+      <div class="form-group" id="futureLikelihoodGroup">
+        <label id="futureLikelihoodLabel"></label>
+        <div class="scale-row" id="scaleFutureLikelihood2">
+          <button type="button" class="scale-btn" onclick="selectScale('scaleFutureLikelihood2',1)">1</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleFutureLikelihood2',2)">2</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleFutureLikelihood2',3)">3</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleFutureLikelihood2',4)">4</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleFutureLikelihood2',5)">5</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleFutureLikelihood2',6)">6</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleFutureLikelihood2',7)">7</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleFutureLikelihood2',8)">8</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleFutureLikelihood2',9)">9</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleFutureLikelihood2',10)">10</button>
+        </div>
+        <div class="scale-labels"><span>1 – Very unlikely</span><span>10 – Definitely will</span></div>
+      </div>
+      <label class="radio-option" style="margin-top:12px;" onclick="toggleFutureNA()">
+        <input type="checkbox" id="futureNACheck">
+        <span>Not applicable. I am caught up on my appointments for the year.</span>
+      </label>
+      </div>
+
+      <button class="btn btn-primary btn-block mt-24" onclick="submitPerceptions()">Submit &amp; Complete</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 7: Complete -->
+  <section id="screen-complete" class="screen">
+    <div class="card text-center">
+      <div style="margin-bottom:20px;">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <h2>Thank You for Your Participation!</h2>
+      <p class="card-subtitle">Your responses have been recorded. Please click the button below to continue.</p>
+      <button class="btn btn-primary btn-block mt-24" onclick="returnToQualtrics()">Continue to Next Section</button>
+      <div class="divider"></div>
+      <p style="font-size:13px;color:var(--gray-400);">Study ID: <span id="studyId"></span></p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  // ─── Configuration ──────────────────────────────────────────
+  const CONFIG = {
+    healthSystem: 'HealthOrg',
+    provider: 'Dr. Sarah Chen',
+    location: 'Primary Care Center',
+    qualtricsIntegration: true
+  };
+
+  // Read URL query params (Qualtrics can pass these in the iframe src URL)
+  function getQueryParam(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+  }
+
+  // Priority: 1) URL query param  2) Qualtrics piped-text token  3) random fallback
+  var ASSIGNED_MSG_CONDITION = getQueryParam('msgCondition') || '__MSG_CONDITION__';
+  if (ASSIGNED_MSG_CONDITION === '__MSG_CONDITION__') {
+    ASSIGNED_MSG_CONDITION = Math.random() < 0.5 ? 'control' : 'personalized';
+  }
+
+  var ASSIGNED_CONDITION = getQueryParam('condition') || '__CONDITION__';
+  if (ASSIGNED_CONDITION === '__CONDITION__') {
+    ASSIGNED_CONDITION = Math.random() < 0.5 ? 'HTN' : 'Diabetes';
+  }
+
+  // ─── Participant State ──────────────────────────────────────
+  const state = {
+    firstName: '',
+    condition: '',
+    missedAppts: null,
+    missedUnsure: false,
+    attendFrequency: '',
+    adherence: 0,
+    notPrescribed: false,
+    selfEfficacyMed: 3,
+    selfEfficacyLifestyle: 3,
+    selfEfficacy: 3,
+    motivation: '',
+    selectedBarrierId: '',
+    selectedBarrierLabel: '',
+    selectedStrategy: '',
+    barrierImpact: 5,
+    messageHeadline: '',
+    schedulingDecision: '',
+    selectedSlot: null,
+    futureLikelihood: null,
+    pmeConvincing: null,
+    pmeScheduleWant: null,
+    pmeRelevance: null,
+    futureNA: false,
+    scheduleReasons: [],
+    scheduleOther: '',
+    declineReasons: [],
+    declineOther: '',
+    messageCondition: '',
+    attentionCheck: '',
+    attentionCheckPassed: false,
+    timestamps: {}
+  };
+
+  // ─── Barrier + Message Data ─────────────────────────────────
+  const BARRIERS = {
+    HTN: [
+      {
+        id: 'htn_no_instructions',
+        label: "I have not been given instructions for managing my blood pressure",
+        barrier: 'General knowledge of HTN',
+        strategy: 'Instruction on how to perform behavior',
+        performance: 0.62,
+        headline: "Here's the next step",
+        body: `Here's the next step: Schedule an appointment with your provider at ${CONFIG.healthSystem}. Our providers can coach you on how to achieve a healthy blood pressure.`
+      },
+      {
+        id: 'htn_stress_emotions',
+        label: "Stress, anxiety, or emotions make it difficult for me to manage my blood pressure",
+        barrier: 'Mental health can impact ability to manage HTN',
+        strategy: 'Incentive (outcome)',
+        performance: 0.62,
+        headline: "A healthier blood pressure is your reward",
+        body: `Want to know how you can take control of your blood pressure? It starts with scheduling a visit with your provider. They can help you create a plan that works for you\u2014including lifestyle changes and the right medication. Even modest changes like decreasing your salt intake or increasing your exercise can help. Reward yourself with better health by scheduling your visit at ${CONFIG.healthSystem} now.`
+      },
+      {
+        id: 'htn_treatment_options',
+        label: "I want my personal treatment options to be explained better",
+        barrier: 'Patients expect providers to educate them about HTN treatments, medication, and acceptable BP ranges',
+        strategy: 'Comparative imagining of future outcomes',
+        performance: 0.62,
+        headline: "Don't get lost with your blood pressure",
+        body: `Achieve a healthy blood pressure with your provider as your guide. Alone, you may struggle to keep it under control. High blood pressure can threaten the health of your heart, brain, eyes, and more. Schedule your visit at ${CONFIG.healthSystem} now.`
+      },
+      {
+        id: 'htn_contact_preference',
+        label: "I do not want to receive random calls or reminders from the health system. I'd rather be contacted by my doctor.",
+        barrier: 'More likely to attend visit if told to directly by provider',
+        strategy: 'Credible source',
+        performance: 0.60,
+        headline: "Your provider is the expert",
+        body: `Our doctors know that managing your blood pressure can feel overwhelming. They want you to feel comfortable and supported. That's why scheduling a visit is so important\u2014your provider can review your numbers, adjust your medications, and give you the guidance you need. ${CONFIG.healthSystem} doctors want to see you successfully manage your blood pressure. Schedule your visit now.`
+      },
+      {
+        id: 'htn_understanding',
+        label: "I don't fully understand how to manage my blood pressure",
+        barrier: 'Health literacy for blood pressure management',
+        strategy: 'Instruction on how to perform behavior',
+        performance: 0.62,
+        headline: "Take the next step for your health",
+        body: `Understanding how to manage your blood pressure starts with a conversation with your provider. Schedule a visit at ${CONFIG.healthSystem} to get clear, personalized guidance on what steps you can take to achieve a healthy blood pressure.`
+      },
+      {
+        id: 'htn_comorbidity',
+        label: "I have too many health problems to do a good job managing them",
+        barrier: 'Comorbidity / overall poor health',
+        strategy: 'Conserving mental resources',
+        performance: 0.59,
+        headline: "One less thing to worry about",
+        body: `Managing multiple health conditions can feel overwhelming. But scheduling a visit with your provider is one simple step you can take today. That way, it's on your calendar and one less thing to think about. Your provider at ${CONFIG.healthSystem} can help you create a plan that works for all of your health needs. Getting peace of mind about your health starts with scheduling your visit.`
+      },
+      {
+        id: 'htn_no_barrier',
+        label: "I do not face any specific barriers or challenges",
+        barrier: 'None (already committed)',
+        strategy: 'Commitment (top performing)',
+        performance: 0.98,
+        headline: "Committing to a healthier blood pressure doesn't have to be hard",
+        body: `Stay committed to your health by scheduling a visit with your provider. They can help you find out where your health stands and make a plan to stay on track. Seeing your progress is a great way to stay motivated. A healthy blood pressure is a journey worth committing to. Schedule your visit at ${CONFIG.healthSystem} now.`
+      }
+    ],
+    Diabetes: [
+      {
+        id: 'dm_continuity_expert',
+        label: "I don't have a consistent relationship with my care team",
+        barrier: 'Continuity of care',
+        strategy: 'Credible source',
+        performance: 0.66,
+        headline: "Your doctor recommends regular checkups",
+        body: `Your doctor recommends you attend your diabetes checkups on a regular basis. As an expert in managing chronic conditions like diabetes, your provider has the knowledge and experience to help you stay on track.<br><br>Regular checkups are important for:<br>&bull; Managing a healthy blood sugar<br>&bull; Reviewing your medications<br>&bull; Discussing your nutrition and exercise<br><br>Schedule a diabetes checkup with your provider today.`
+      },
+      {
+        id: 'dm_forgetfulness',
+        label: "I tend to forget about my checkups",
+        barrier: 'Forgetfulness',
+        strategy: 'Reduce negative emotions',
+        performance: 0.65,
+        headline: "Your diabetes checkup reminder",
+        body: `We understand that forgetting your diabetes checkup happens. But don\u2019t worry\u2014you can easily get back on track.<br><br>Schedule your diabetes checkup today and get one step closer to better health outcomes and peace of mind. At this visit, your primary care provider can review your A1C levels and medication, schedule you for tests or screenings, and answer any questions that may have popped up since your last visit.<br><br>We\u2019re looking forward to seeing you again!`
+      },
+      {
+        id: 'dm_continuity_team',
+        label: "I feel like I'm managing my diabetes alone",
+        barrier: 'Continuity of care',
+        strategy: 'Social reward',
+        performance: 0.63,
+        headline: "Your health is worth the visit",
+        body: `By visiting your provider about your diabetes, you benefit from a long-term relationship that\u2019s focused on you and your health. That\u2019s a reward you can\u2019t pass up.<br><br>You and your provider are a team, working together to help you feel your best. Schedule your diabetes checkup today and be rewarded with the best possible care at ${CONFIG.healthSystem}.`
+      },
+      {
+        id: 'dm_importance',
+        label: "I'm not sure checkups are that important",
+        barrier: 'Perceived importance of attendance',
+        strategy: 'Incentive (outcome)',
+        performance: 0.63,
+        headline: "With regular diabetes checkups, you get so much more",
+        body: `Do you know why it\u2019s important to attend your diabetes checkups? Here are just some of the benefits:<br><br>&bull; Improved control of blood pressure, weight, and A1C<br>&bull; Support with exercise and nutrition, so you feel healthy and energized<br>&bull; Stay current with preventive screenings or tests, which can help you avoid complications<br><br>These benefits are right around the corner. Just schedule your next diabetes care visit today.`
+      },
+      {
+        id: 'dm_provider_relationship',
+        label: "I don't feel connected to my provider",
+        barrier: 'Patient-provider relationship',
+        strategy: 'Social comparison',
+        performance: 0.60,
+        headline: "Patients like you trust us with their diabetes care",
+        body: `Patients like you lean on their trusted providers to feel confident about their diabetes care. You deserve a committed health care team\u2014and we\u2019re here to deliver on that.<br><br>Schedule your diabetes checkup and get the personalized care that helps patients like you feel supported and confident. Book your visit now, and let\u2019s reach your health goals\u2014together.`
+      },
+      {
+        id: 'dm_understanding',
+        label: "I don't fully understand how to manage my blood sugar",
+        barrier: 'Health literacy for blood sugar management',
+        strategy: 'Instruction on how to perform behavior',
+        performance: 0.53,
+        headline: "Here\u2019s how to get started",
+        body: `HealthOrg offers diabetes care visits with your primary care providers, care teams, and patient navigators. Understanding how to manage your blood sugar starts with a conversation with your provider.<br><br>Schedule your diabetes checkup to get clear, personalized guidance on what steps you can take for a healthier you.`
+      },
+      {
+        id: 'dm_comorbidity',
+        label: "I have too many health problems to do a good job managing them",
+        barrier: 'Comorbidity / overall poor health',
+        strategy: 'Conserving mental resources',
+        performance: 0.59,
+        headline: "One less thing to worry about",
+        body: `Managing your diabetes takes work\u2014juggling visits, labs, and different providers. Schedule your diabetes checkup now so you don\u2019t have to worry about getting it on the calendar.<br><br>Your provider can help you create a plan that works for all of your health needs. That\u2019s one less thing to think about.`
+      }
+    ]
+  };
+
+  const DECLINE_REASONS = [
+    { id: 'check_schedule', label: 'I need to check my schedule first' },
+    { id: 'dont_need', label: "I don't think I need this appointment right now" },
+    { id: 'cost_concern', label: "I'm worried about the cost" },
+    { id: 'transportation', label: "I can't get to the appointment easily" },
+    { id: 'other_priorities', label: 'I have other priorities right now' },
+    { id: 'talk_first', label: 'I need to talk to someone first' },
+    { id: 'not_comfortable', label: "I'm not comfortable with medical visits" },
+    { id: 'other', label: 'Other reason' }
+  ];
+
+  function getScheduleReasons(condition) {
+    const topic = condition === 'HTN' ? 'blood pressure' : 'blood sugar';
+    return [
+      { id: 'message_reminded', label: 'The message reminded me that I need to take care of my health' },
+      { id: 'discuss_management', label: `I want to discuss my ${topic} management with my care team` },
+      { id: 'motivated', label: 'I feel motivated to stay on track with my health' },
+      { id: 'trust_provider', label: "I trust my care team's expertise and guidance" },
+      { id: 'avoid_complications', label: 'I want to avoid future health complications' },
+      { id: 'overdue', label: "It's been a while since my last visit and I know I'm overdue" },
+      { id: 'medication_questions', label: 'I have questions about my medication or treatment plan' },
+      { id: 'schedule_other', label: 'Other reason' }
+    ];
+  }
+
+  // ─── Screen Management ──────────────────────────────────────
+  const SCREEN_ORDER = [
+    'screen-welcome', 'screen-condition', 'screen-assessment-health',
+    'screen-assessment-barriers', 'screen-message'
+  ];
+  let currentScreen = 'screen-welcome';
+
+  function navigateTo(screenId) {
+    document.querySelector('.screen.active')?.classList.remove('active');
+    const target = document.getElementById(screenId);
+    target.classList.remove('active');
+    void target.offsetWidth;
+    target.classList.add('active');
+    currentScreen = screenId;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const idx = SCREEN_ORDER.indexOf(screenId);
+    const pct = idx >= 0 ? Math.round((idx / (SCREEN_ORDER.length)) * 100) : 100;
+    document.getElementById('progressFill').style.width = pct + '%';
+
+    state.timestamps[screenId] = new Date().toISOString();
+  }
+
+  // ─── Screen 1: Welcome ─────────────────────────────────────
+  // Populate condition-specific text on load
+  (function() {
+    var condText = ASSIGNED_CONDITION === 'HTN' ? 'blood pressure' : 'diabetes';
+    document.getElementById('welcomeConditionText').textContent = condText;
+    var apptType = ASSIGNED_CONDITION === 'HTN' ? 'blood pressure management' : 'diabetes management';
+    document.getElementById('futureLikelihoodLabel').textContent = 'How likely are you to schedule a ' + apptType + ' appointment this year?';
+  })();
+
+  function startJourney() {
+    const name = document.getElementById('inputFirstName').value.trim();
+    if (!name) {
+      document.getElementById('inputFirstName').style.borderColor = 'var(--danger)';
+      document.getElementById('inputFirstName').focus();
+      return;
+    }
+    state.firstName = name;
+    state.condition = ASSIGNED_CONDITION;
+    document.getElementById('userGreeting').textContent = 'Hi, ' + name;
+    buildHealthAssessment();
+    navigateTo('screen-assessment-health');
+  }
+
+  document.getElementById('inputFirstName').addEventListener('keydown', e => {
+    if (e.key === 'Enter') startJourney();
+    e.target.style.borderColor = '';
+  });
+
+  // ─── Screen 2: Condition Selection ──────────────────────────
+  function selectCondition(condition) {
+    state.condition = condition;
+    document.querySelectorAll('.condition-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('card-' + condition).classList.add('selected');
+    const btn = document.getElementById('btnConditionNext');
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+
+  function goToAssessment() {
+    if (!state.condition) return;
+    buildHealthAssessment();
+    navigateTo('screen-assessment-health');
+  }
+
+  // ─── Screen 3a: Health Assessment Builder ─────────────────
+  function buildHealthAssessment() {
+    const isHTN = state.condition === 'HTN';
+    const condTopic = isHTN ? 'blood pressure' : 'blood sugar';
+    const medLabel = isHTN ? 'hypertension' : 'diabetes';
+    const notPrescribedText = isHTN
+      ? 'I have not been prescribed medication to manage my blood pressure'
+      : 'I have not been prescribed medication to manage my blood sugar';
+    const lifestyleHint = 'For example: adding more fruits and vegetables to your diet, regular physical activity, etc.';
+
+    let html = '';
+
+    html += `<div class="section-header">
+      <span class="section-icon blue"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+      <div><h3>Your Appointment History</h3></div>
+    </div>`;
+
+    html += `<div class="form-group">
+      <label>Please estimate how many scheduled healthcare appointments you missed or did not attend in the past 12 months.</label>
+      <div id="missedApptScaleWrap">
+        <div class="scale-row" id="scaleMissedAppts">
+          <button type="button" class="scale-btn" onclick="selectScale('scaleMissedAppts',0)">0</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleMissedAppts',1)">1</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleMissedAppts',2)">2</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleMissedAppts',3)">3</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleMissedAppts',4)">4</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleMissedAppts',5)">5+</button>
+        </div>
+        <div class="scale-labels"><span>0 missed</span><span>5 or more</span></div>
+      </div>
+      <label class="radio-option" style="margin-top:12px;" onclick="toggleMissedUnsure()">
+        <input type="checkbox" id="missedUnsureCheck">
+        <span>I'm not sure</span>
+      </label>
+    </div>`;
+
+    html += `<div class="form-group">
+      <label>About how often do you attend your regularly scheduled healthcare appointments?</label>
+      <select id="attendFrequency">
+        <option value="" disabled selected>Select one...</option>
+        <option value="always">Always</option>
+        <option value="most">Most of the time</option>
+        <option value="half">About half the time</option>
+        <option value="rarely">Rarely</option>
+        <option value="never">Never</option>
+      </select>
+    </div>`;
+
+    html += `<div class="section-header">
+      <span class="section-icon green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+      <div><h3>Medication &amp; Lifestyle</h3></div>
+    </div>`;
+
+    html += `<div class="form-group">
+      <label>How many days did you take your ${medLabel} medication last week?</label>
+      <div id="adherenceSliderWrap">
+        <div class="scale-row" id="scaleAdherence">
+          <button type="button" class="scale-btn" onclick="selectScale('scaleAdherence',0)">0</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleAdherence',1)">1</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleAdherence',2)">2</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleAdherence',3)">3</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleAdherence',4)">4</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleAdherence',5)">5</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleAdherence',6)">6</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleAdherence',7)">7</button>
+        </div>
+        <div class="scale-labels"><span>0 days</span><span>7 days</span></div>
+      </div>
+      <label class="radio-option" style="margin-top:12px;" onclick="toggleNotPrescribed()">
+        <input type="checkbox" id="notPrescribedCheck">
+        <span>${notPrescribedText}</span>
+      </label>
+    </div>`;
+
+    html += `<div class="form-group">
+      <label>Do you feel confident that you can manage your ${condTopic} with medication?</label>
+      <div id="medEfficacySliderWrap">
+        <div class="scale-row" id="scaleEfficacyMed">
+          <button type="button" class="scale-btn" onclick="selectScale('scaleEfficacyMed',1)">1</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleEfficacyMed',2)">2</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleEfficacyMed',3)">3</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleEfficacyMed',4)">4</button>
+          <button type="button" class="scale-btn" onclick="selectScale('scaleEfficacyMed',5)">5</button>
+        </div>
+        <div class="scale-labels"><span>1 – Not at all</span><span>5 – Very confident</span></div>
+      </div>
+      <label class="radio-option" style="margin-top:12px;" onclick="toggleMedNA()">
+        <input type="checkbox" id="medNACheck">
+        <span>Does not apply to me</span>
+      </label>
+    </div>`;
+
+    html += `<div class="form-group">
+      <label>Do you feel confident that you can manage your ${condTopic} with dietary and lifestyle choices?</label>
+      <p class="hint">${lifestyleHint}</p>
+      <div class="scale-row" id="scaleEfficacyLifestyle">
+        <button type="button" class="scale-btn" onclick="selectScale('scaleEfficacyLifestyle',1)">1</button>
+        <button type="button" class="scale-btn" onclick="selectScale('scaleEfficacyLifestyle',2)">2</button>
+        <button type="button" class="scale-btn" onclick="selectScale('scaleEfficacyLifestyle',3)">3</button>
+        <button type="button" class="scale-btn" onclick="selectScale('scaleEfficacyLifestyle',4)">4</button>
+        <button type="button" class="scale-btn" onclick="selectScale('scaleEfficacyLifestyle',5)">5</button>
+      </div>
+      <div class="scale-labels"><span>1 – Not at all</span><span>5 – Very confident</span></div>
+    </div>`;
+
+    document.getElementById('assessmentHealthContent').innerHTML = html;
+  }
+
+  function selectScale(groupId, value) {
+    var group = document.getElementById(groupId);
+    if (!group) return;
+    var btns = group.querySelectorAll('.scale-btn');
+    for (var i = 0; i < btns.length; i++) { btns[i].classList.remove('selected'); }
+    for (var i = 0; i < btns.length; i++) {
+      if (parseInt(btns[i].textContent) === value) { btns[i].classList.add('selected'); break; }
+    }
+    group.dataset.value = value;
+    group.classList.remove('scale-error');
+  }
+
+  function getScaleValue(groupId) {
+    var group = document.getElementById(groupId);
+    if (!group || !group.dataset.value) return null;
+    return parseInt(group.dataset.value);
+  }
+
+  function toggleNotPrescribed() {
+    var checkbox = document.getElementById('notPrescribedCheck');
+    var wrap = document.getElementById('adherenceSliderWrap');
+    if (checkbox.checked) {
+      wrap.style.opacity = '0.35';
+      wrap.style.pointerEvents = 'none';
+      var medNA = document.getElementById('medNACheck');
+      if (medNA && !medNA.checked) { medNA.checked = true; toggleMedNA(); }
+    } else {
+      wrap.style.opacity = '1';
+      wrap.style.pointerEvents = 'auto';
+    }
+  }
+
+  function toggleMedNA() {
+    var checkbox = document.getElementById('medNACheck');
+    var wrap = document.getElementById('medEfficacySliderWrap');
+    if (checkbox.checked) {
+      wrap.style.opacity = '0.35';
+      wrap.style.pointerEvents = 'none';
+    } else {
+      wrap.style.opacity = '1';
+      wrap.style.pointerEvents = 'auto';
+    }
+  }
+
+  function toggleMissedUnsure() {
+    var checkbox = document.getElementById('missedUnsureCheck');
+    var wrap = document.getElementById('missedApptScaleWrap');
+    if (checkbox.checked) {
+      wrap.style.opacity = '0.35';
+      wrap.style.pointerEvents = 'none';
+    } else {
+      wrap.style.opacity = '1';
+      wrap.style.pointerEvents = 'auto';
+    }
+  }
+
+  function toggleFutureNA() {
+    var checkbox = document.getElementById('futureNACheck');
+    var wrap = document.getElementById('scaleFutureLikelihood2');
+    if (checkbox.checked) {
+      wrap.style.opacity = '0.35';
+      wrap.style.pointerEvents = 'none';
+    } else {
+      wrap.style.opacity = '1';
+      wrap.style.pointerEvents = 'auto';
+    }
+  }
+
+  // ─── Screen 3a → 3b: Advance to Barriers ─────────────────
+  function advanceToBarriers() {
+    var missedUnsure = document.getElementById('missedUnsureCheck');
+    state.missedUnsure = missedUnsure ? missedUnsure.checked : false;
+
+    if (!state.missedUnsure && getScaleValue('scaleMissedAppts') === null) {
+      document.getElementById('scaleMissedAppts').classList.add('scale-error');
+      document.getElementById('scaleMissedAppts').scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    state.missedAppts = state.missedUnsure ? -1 : (getScaleValue('scaleMissedAppts'));
+
+    var freqSelect = document.getElementById('attendFrequency');
+    if (!freqSelect || !freqSelect.value) {
+      if (freqSelect) { freqSelect.style.outline = '2px solid var(--danger)'; freqSelect.style.borderRadius = 'var(--radius-sm)'; }
+      freqSelect.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    if (freqSelect) freqSelect.style.outline = '';
+    state.attendFrequency = freqSelect.value;
+
+    var notPrescribed = document.getElementById('notPrescribedCheck');
+    state.notPrescribed = notPrescribed ? notPrescribed.checked : false;
+
+    if (!state.notPrescribed && getScaleValue('scaleAdherence') === null) {
+      document.getElementById('scaleAdherence').classList.add('scale-error');
+      document.getElementById('scaleAdherence').scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    state.adherence = state.notPrescribed ? -1 : (getScaleValue('scaleAdherence') || 0);
+
+    var medNA = document.getElementById('medNACheck');
+    state.medNA = medNA ? medNA.checked : false;
+
+    if (!state.medNA && getScaleValue('scaleEfficacyMed') === null) {
+      document.getElementById('scaleEfficacyMed').classList.add('scale-error');
+      document.getElementById('scaleEfficacyMed').scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    state.selfEfficacyMed = state.medNA ? -1 : (getScaleValue('scaleEfficacyMed') || 0);
+
+    if (getScaleValue('scaleEfficacyLifestyle') === null) {
+      document.getElementById('scaleEfficacyLifestyle').classList.add('scale-error');
+      document.getElementById('scaleEfficacyLifestyle').scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    state.selfEfficacyLifestyle = getScaleValue('scaleEfficacyLifestyle');
+
+    buildBarrierAssessment();
+    navigateTo('screen-assessment-barriers');
+  }
+
+  // ─── Screen 3b: Show the correct barrier form ────────────────
+  function buildBarrierAssessment() {
+    var isHTN = state.condition === 'HTN';
+    document.getElementById('barrierFormHTN').style.display = isHTN ? 'block' : 'none';
+    document.getElementById('barrierFormDiabetes').style.display = isHTN ? 'none' : 'block';
+  }
+
+  function onBarrierChange() {
+    var isHTN = state.condition === 'HTN';
+    var barrierSelect = document.getElementById(isHTN ? 'assessBarrierHTN' : 'assessBarrierDM');
+    var impactGroup = document.getElementById(isHTN ? 'barrierImpactGroupHTN' : 'barrierImpactGroupDM');
+    if (barrierSelect && impactGroup) {
+      var barrierId = barrierSelect.value;
+      var noBarrierIds = ['htn_no_barrier'];
+      impactGroup.style.display = (barrierId && noBarrierIds.indexOf(barrierId) === -1) ? 'block' : 'none';
+    }
+  }
+
+  // ─── Screen 3b → Message: Submit Barriers ─────────────────
+  function submitAssessment() {
+    var isHTN = state.condition === 'HTN';
+    var barrierSelect = document.getElementById(isHTN ? 'assessBarrierHTN' : 'assessBarrierDM');
+    var motivationSelect = document.getElementById(isHTN ? 'assessMotivationHTN' : 'assessMotivationDM');
+    var barrierId = barrierSelect ? barrierSelect.value : '';
+    var motivation = motivationSelect ? motivationSelect.value : '';
+
+    if (!barrierId) {
+      if (barrierSelect) { barrierSelect.style.borderColor = 'var(--danger)'; barrierSelect.focus(); }
+      return;
+    }
+    if (!motivation) {
+      if (motivationSelect) { motivationSelect.style.borderColor = 'var(--danger)'; motivationSelect.focus(); }
+      return;
+    }
+
+    var impactScaleId = isHTN ? 'scaleBarrierImpactHTN' : 'scaleBarrierImpactDM';
+    var impactVal = getScaleValue(impactScaleId);
+    var noBarrierIds = ['htn_no_barrier'];
+    if (noBarrierIds.indexOf(barrierId) === -1 && impactVal === null) {
+      document.getElementById(impactScaleId).classList.add('scale-error');
+      document.getElementById(impactScaleId).scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    state.barrierImpact = impactVal || 0;
+    state.motivation = motivation;
+    state.selectedBarrierId = barrierId;
+
+    var barrier = null;
+    var list = BARRIERS[state.condition];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === barrierId) { barrier = list[i]; break; }
+    }
+    if (!barrier) return;
+
+    state.selectedBarrierLabel = barrier.label;
+    state.selectedStrategy = barrier.strategy;
+    state._selectedBarrierObj = barrier;
+
+    navigateTo('screen-attention');
+  }
+
+  function submitAttentionCheck() {
+    var sel = document.getElementById('attentionCheck');
+    if (!sel || !sel.value) {
+      sel.style.borderColor = 'var(--danger)';
+      sel.focus();
+      return;
+    }
+    sel.style.borderColor = '';
+    state.attentionCheck = sel.value;
+    state.attentionCheckPassed = (sel.value === 'correct');
+
+    var barrier = state._selectedBarrierObj;
+    var isControl = ASSIGNED_MSG_CONDITION === 'control';
+    state.messageCondition = ASSIGNED_MSG_CONDITION;
+
+    if (isControl) {
+      state.messageHeadline = 'Schedule your visit';
+      buildMessage(null);
+    } else {
+      state.messageHeadline = barrier.headline;
+      buildMessage(barrier);
+    }
+    document.getElementById('badgeCount').classList.add('visible');
+    navigateTo('screen-message');
+  }
+
+  // ─── Screen 4: Tailored Message ────────────────────────────
+  function buildMessage(barrier) {
+    var now = new Date();
+    var timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+    document.getElementById('msgTimestamp').textContent = 'Today at ' + timeStr;
+
+    if (barrier === null) {
+      var controlBody = 'You are due for an appointment. Please schedule your appointment today.<br><br>If you have any questions or concerns, feel free to contact your provider or our customer service team.<br><br>Thank you for choosing your Care Team at HealthOrg. We look forward to continuing to support you on your health journey!';
+      if (state.firstName) {
+        controlBody = state.firstName + ', you are due for an appointment. Please schedule your appointment today.<br><br>If you have any questions or concerns, feel free to contact your provider or our customer service team.<br><br>Thank you for choosing your Care Team at HealthOrg. We look forward to continuing to support you on your health journey!';
+      }
+      document.getElementById('msgSubject').textContent = 'Schedule your visit';
+      document.getElementById('msgBody').innerHTML = controlBody;
+    } else {
+      var personalizedBody = barrier.body;
+      if (state.firstName) {
+        personalizedBody = state.firstName + ', ' + personalizedBody.charAt(0).toLowerCase() + personalizedBody.slice(1);
+      }
+      document.getElementById('msgSubject').textContent = barrier.headline;
+      document.getElementById('msgBody').innerHTML = personalizedBody;
+    }
+  }
+
+  // ─── HTN: Tap to Schedule → Why? ──────────────────────────
+  function handleTapToSchedule() {
+    document.getElementById('badgeCount').classList.remove('visible');
+    state.schedulingDecision = 'scheduled';
+    buildScheduleReasonsForm();
+    navigateTo('screen-schedule-reasons');
+  }
+
+  function buildScheduleReasonsForm() {
+    const reasons = getScheduleReasons(state.condition);
+    const container = document.getElementById('scheduleReasons');
+    container.innerHTML = reasons.map(r => `
+      <label class="radio-option" onclick="toggleScheduleReason(this, '${r.id}')">
+        <input type="checkbox" value="${r.id}">
+        <span>${r.label}</span>
+      </label>`).join('');
+  }
+
+  function toggleScheduleReason(el, id) {
+    el.classList.toggle('selected');
+    if (id === 'schedule_other') {
+      document.getElementById('scheduleOtherGroup').style.display =
+        el.classList.contains('selected') ? 'block' : 'none';
+    }
+  }
+
+  function submitScheduleReasons() {
+    var checked = document.querySelectorAll('#scheduleReasons input:checked');
+    if (checked.length === 0) {
+      var container = document.getElementById('scheduleReasons');
+      container.style.outline = '2px solid var(--danger)';
+      container.style.borderRadius = 'var(--radius-sm)';
+      container.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    document.getElementById('scheduleReasons').style.outline = '';
+    state.scheduleReasons = Array.from(checked).map(function(c) { return c.value; });
+    state.scheduleOther = document.getElementById('scheduleOtherText') ? document.getElementById('scheduleOtherText').value : '';
+    navigateTo('screen-message-perceptions');
+  }
+
+  // ─── Diabetes: Calendar Scheduling ────────────────────────
+  function goToScheduling() {
+    document.getElementById('badgeCount').classList.remove('visible');
+    const condLabel = 'Diabetes';
+    document.getElementById('schedConditionLabel').textContent = condLabel;
+    buildCalendar();
+    navigateTo('screen-scheduling');
+  }
+
+  function buildCalendar() {
+    const grid = document.getElementById('calendarGrid');
+    const today = new Date();
+    const nextMonday = new Date(today);
+    nextMonday.setDate(today.getDate() + ((8 - today.getDay()) % 7 || 7));
+
+    const weekStart = new Date(nextMonday);
+    const weekEnd = new Date(nextMonday);
+    weekEnd.setDate(weekEnd.getDate() + 4);
+    document.getElementById('calendarWeekLabel').textContent =
+      weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' – ' +
+      weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    const SLOTS = ['9:00 AM', '10:30 AM', '1:00 PM', '2:30 PM'];
+    let html = '';
+
+    for (let d = 0; d < 5; d++) {
+      const date = new Date(nextMonday);
+      date.setDate(nextMonday.getDate() + d);
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+      const dayNum = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const dateStr = date.toISOString().split('T')[0];
+
+      const availableSlots = SLOTS.filter(() => Math.random() > 0.3);
+
+      html += `<div class="day-column">
+        <div class="day-label">${dayName}<br>${dayNum}</div>
+        <div class="day-slots">`;
+
+      if (availableSlots.length === 0) {
+        html += `<div style="padding:8px;text-align:center;font-size:12px;color:var(--gray-400);">No openings</div>`;
+      } else {
+        availableSlots.forEach(slot => {
+          html += `<button class="time-slot" data-date="${dateStr}" data-time="${slot}" onclick="selectTimeSlot(this)">${slot}</button>`;
+        });
+      }
+      html += `</div></div>`;
+    }
+    grid.innerHTML = html;
+    document.getElementById('selectedSlotConfirm').style.display = 'none';
+  }
+
+  function selectTimeSlot(el) {
+    document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+    el.classList.add('selected');
+    state.selectedSlot = {
+      date: el.dataset.date,
+      time: el.dataset.time,
+      display: new Date(el.dataset.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) + ' at ' + el.dataset.time
+    };
+    document.getElementById('selectedSlotAlert').innerHTML =
+      `<strong>Selected:</strong> ${state.selectedSlot.display} with ${CONFIG.provider}`;
+    document.getElementById('selectedSlotConfirm').style.display = 'block';
+  }
+
+  function confirmAppointment() {
+    state.schedulingDecision = 'scheduled';
+    buildConfirmation();
+    navigateTo('screen-confirmed');
+  }
+
+  function declineScheduling() {
+    state.schedulingDecision = 'declined';
+    buildDeclineForm();
+    navigateTo('screen-decline');
+  }
+
+  // ─── Screen 6a: Confirmation ───────────────────────────────
+  function buildConfirmation() {
+    const condLabel = state.condition === 'HTN' ? 'Blood Pressure Checkup' : 'Diabetes Checkup';
+    document.getElementById('apptSummary').innerHTML = `
+      <div class="row"><span class="label">Appointment</span><span class="value">${condLabel}</span></div>
+      <div class="row"><span class="label">Date &amp; Time</span><span class="value">${state.selectedSlot.display}</span></div>
+      <div class="row"><span class="label">Provider</span><span class="value">${CONFIG.provider}</span></div>
+      <div class="row"><span class="label">Location</span><span class="value">${CONFIG.location}</span></div>`;
+  }
+
+  function submitConfirmed() {
+    navigateTo('screen-message-perceptions');
+  }
+
+  // ─── Screen 6b: Decline Form ──────────────────────────────
+  function buildDeclineForm() {
+    const container = document.getElementById('declineReasons');
+    container.innerHTML = DECLINE_REASONS.map(r => `
+      <label class="radio-option" onclick="toggleDeclineReason(this, '${r.id}')">
+        <input type="checkbox" value="${r.id}">
+        <span>${r.label}</span>
+      </label>`).join('');
+  }
+
+  function toggleDeclineReason(el, id) {
+    el.classList.toggle('selected');
+    if (id === 'other') {
+      document.getElementById('declineOtherGroup').style.display =
+        el.classList.contains('selected') ? 'block' : 'none';
+    }
+  }
+
+  function submitDecline() {
+    var checked = document.querySelectorAll('#declineReasons input:checked');
+    if (checked.length === 0) {
+      var container = document.getElementById('declineReasons');
+      container.style.outline = '2px solid var(--danger)';
+      container.style.borderRadius = 'var(--radius-sm)';
+      container.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    document.getElementById('declineReasons').style.outline = '';
+    state.declineReasons = Array.from(checked).map(function(c) { return c.value; });
+    state.declineOther = document.getElementById('declineOtherText') ? document.getElementById('declineOtherText').value : '';
+    navigateTo('screen-message-perceptions');
+  }
+
+  // ─── Message Perceptions ───────────────────────────────────
+  function submitPerceptions() {
+    var pmeFields = ['scalePME1','scalePME2','scalePME3'];
+    for (var i = 0; i < pmeFields.length; i++) {
+      if (getScaleValue(pmeFields[i]) === null) {
+        document.getElementById(pmeFields[i]).classList.add('scale-error');
+        document.getElementById(pmeFields[i]).scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+    }
+    var futureNA = document.getElementById('futureNACheck');
+    state.futureNA = futureNA ? futureNA.checked : false;
+
+    if (!state.futureNA && getScaleValue('scaleFutureLikelihood2') === null) {
+      document.getElementById('scaleFutureLikelihood2').classList.add('scale-error');
+      document.getElementById('scaleFutureLikelihood2').scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    state.pmeConvincing = getScaleValue('scalePME1');
+    state.pmeScheduleWant = getScaleValue('scalePME2');
+    state.pmeRelevance = getScaleValue('scalePME3');
+    state.futureLikelihood = state.futureNA ? -1 : getScaleValue('scaleFutureLikelihood2');
+    finishStudy();
+  }
+
+  // ─── Finish & Data Export ──────────────────────────────────
+  function finishStudy() {
+    state.timestamps.completed = new Date().toISOString();
+    const studyId = 'BTS-' + Date.now().toString(36).toUpperCase();
+    document.getElementById('studyId').textContent = studyId;
+    state.studyId = studyId;
+    document.getElementById('progressFill').style.width = '100%';
+    navigateTo('screen-complete');
+    sendToQualtrics();
+  }
+
+  /** Field names match Qualtrics Survey Flow "Set Embedded Data" keys (no portal_ prefix). */
+  function buildPayload() {
+    return {
+      studyId: state.studyId || '',
+      participantFirstName: state.firstName,
+      condition: state.condition,
+      adherence: state.notPrescribed ? 'Not prescribed' : String(state.adherence),
+      notPrescribed: String(state.notPrescribed),
+      selfEfficacyMed: state.medNA ? 'NA' : String(state.selfEfficacyMed),
+      medNA: String(state.medNA || false),
+      selfEfficacyLifestyle: String(state.selfEfficacyLifestyle),
+      motivation: state.motivation,
+      selectedBarrierId: state.selectedBarrierId,
+      selectedBarrierLabel: state.selectedBarrierLabel,
+      selectedStrategy: state.selectedStrategy,
+      barrierImpact: String(state.barrierImpact),
+      messageCondition: state.messageCondition,
+      messageHeadline: state.messageHeadline,
+      schedulingDecision: state.schedulingDecision,
+      selectedSlot: state.selectedSlot ? state.selectedSlot.display : '',
+      attendanceLikelihood: String(state.pmeScheduleWant != null ? state.pmeScheduleWant : ''),
+      futureLikelihood: state.futureNA ? 'NA' : String(state.futureLikelihood != null ? state.futureLikelihood : ''),
+      scheduleReasons: state.scheduleReasons.join('; '),
+      scheduleOther: state.scheduleOther,
+      declineReasons: state.declineReasons.join('; '),
+      declineOther: state.declineOther,
+      missedAppts: state.missedUnsure ? 'unsure' : String(state.missedAppts != null ? state.missedAppts : ''),
+      missedUnsure: String(state.missedUnsure),
+      attendFrequency: state.attendFrequency,
+      attentionCheck: state.attentionCheck,
+      attentionCheckPassed: String(state.attentionCheckPassed),
+      pmeConvincing: String(state.pmeConvincing != null ? state.pmeConvincing : ''),
+      pmeRelevance: String(state.pmeRelevance != null ? state.pmeRelevance : ''),
+      futureNA: String(state.futureNA),
+      timestamps: JSON.stringify(state.timestamps)
+    };
+  }
+
+  function returnToQualtrics() {
+    // Method 1: postMessage to parent (Qualtrics JS listener will call clickNextButton)
+    try { window.parent.postMessage('portal-advance-page', '*'); } catch (e) {}
+    // Method 2: try clicking the Qualtrics Next button directly (same-origin only)
+    try {
+      var nextBtn = window.parent.document.getElementById('NextButton');
+      if (nextBtn) nextBtn.click();
+    } catch (e) {}
+  }
+
+  function sendToQualtrics() {
+    var payload = buildPayload();
+    console.log('[Barrier Study Data]', JSON.stringify(payload, null, 2));
+
+    // METHOD 1 (primary): postMessage — works cross-origin in iframe.
+    // A Qualtrics question JS listener receives this and calls setEmbeddedData.
+    try {
+      window.parent.postMessage({
+        type: 'barrier-study-data',
+        payload: payload
+      }, '*');
+    } catch (e) {}
+
+    // METHOD 2: direct parent Qualtrics API (same-origin only, e.g. inline HTML)
+    try {
+      if (window.parent && window.parent.Qualtrics) {
+        var keys = Object.keys(payload);
+        for (var i = 0; i < keys.length; i++) {
+          window.parent.Qualtrics.SurveyEngine.setEmbeddedData(keys[i], payload[keys[i]]);
+        }
+      }
+    } catch (e) {}
+
+    // METHOD 3: Qualtrics API in current scope (when HTML is embedded inline, not iframe)
+    try {
+      if (typeof Qualtrics !== 'undefined') {
+        var keys = Object.keys(payload);
+        for (var i = 0; i < keys.length; i++) {
+          Qualtrics.SurveyEngine.setEmbeddedData(keys[i], payload[keys[i]]);
+        }
+      }
+    } catch (e) {}
+  }
+
+  /*
+   * QUALTRICS — plain-language checklist
+   *
+   * What you already did right: Survey Flow has a green "Set Embedded Data"
+   * box listing every buildPayload() key (studyId, participantFirstName,
+   * condition, … missedAppts, missedUnsure, attendFrequency, attentionCheck,
+   * attentionCheckPassed, pmeConvincing, pmeRelevance, futureNA, timestamps).
+   * timestamps is JSON of screen ISO times only; those names must match exactly.
+   *
+   * What was missing: The patient portal runs in its own mini-page inside
+   * the survey. When the participant finishes, the portal has to "hand off"
+   * answers to Qualtrics. That handoff is done with a short listener in
+   * Edit Question JavaScript (below). Without it, nothing saves to CSV.
+   *
+   * Add this block to the SAME question where you already have your long
+   * script (the one with b64). Merge carefully: keep your existing code,
+   * and add the window.addEventListener part. Use your variable name for
+   * the question (e.g. qEngine) where it says qEngine below.
+   *
+   *   Qualtrics.SurveyEngine.addOnload(function () {
+   *       var qEngine = this;
+   *       window.addEventListener("message", function (event) {
+   *           if (!event.data) return;
+   *           if (event.data.type === "barrier-study-data" && event.data.payload) {
+   *               var payload = event.data.payload;
+   *               var keys = Object.keys(payload);
+   *               for (var i = 0; i < keys.length; i++) {
+   *                   Qualtrics.SurveyEngine.setEmbeddedData(keys[i], payload[keys[i]]);
+   *               }
+   *           }
+   *           if (event.data === "portal-advance-page") {
+   *               qEngine.clickNextButton();
+   *           }
+   *       });
+   *   });
+   *
+   * After you update this HTML file, regenerate the base64 string (b64) and
+   * paste it back into Qualtrics, OR host the file on the web and set
+   * iframe.src to that URL with ?condition=…&msgCondition=… .
+   *
+   * buildPayload sends participantFirstName — add that embedded data field in Survey Flow.
+   */
+</script>
+</body>
+</html>
